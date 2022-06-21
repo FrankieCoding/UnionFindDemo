@@ -4,6 +4,7 @@ public class Solution {
     int[] parent;
     int count;
 
+
     public int findCircleNum(int[][] isConnected) {
         int len = isConnected.length;
         count = len;
