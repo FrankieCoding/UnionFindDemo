@@ -8,15 +8,15 @@ public class Solution {
     public int findCircleNum(int[][] isConnected) {
         int len = isConnected.length;
         count = len;
-        parent = new int[len + 1];
-        for (int i = 1; i < len + 1; i++) {
+        parent = new int[len ];
+        for (int i = 1; i < len ; i++) {
             parent[i] = i;
         }
 
         for (int i = 0; i < len; i++) {
             for (int j = 0; j < len; j++) {
                 if (isConnected[i][j] == 1) {
-                    union(i + 1, j + 1);
+                    union(i , j );
                 }
             }
         }
