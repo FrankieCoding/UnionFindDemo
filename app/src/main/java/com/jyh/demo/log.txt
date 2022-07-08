@@ -1,0 +1,98 @@
+LAUNCHER3 ANDROID10.0修改文件夹图标为九宫格
+
+1、修改预览文件夹的最大容纳数量为9
+ClippedFolderIconLayoutRule.java:
+public static final int MAX_NUM_ITEMS_IN_PREVIEW = 9;
+
+2、判定只要rank小于9，就是可以在预览文件夹里显示的item
+FolderIconPreviewVerifier.java:
+
+public boolean isItemInPreview(int page, int rank) {
+        if (mGridSize[0] == 1) {
+            Log.w(TAG, "setFolderInfo not called before checking if item is in preview.");
+        }
+        return rank < MAX_NUM_ITEMS_IN_PREVIEW;
+    }
+
+
+3、改完上面，这里传进来的index就只会是0-8，然后改一下计算位置的方法。
+ClippedFolderIconLayoutRule.java:
+
+private static final float MIN_SCALE = 0.2f;
+public PreviewItemDrawingParams computePreviewItemDrawingParams(int index, int curNumItems,
+        PreviewItemDrawingParams params) {
+    float totalScale = scaleForItem();
+    float transX;
+    float transY;
+    float overlayAlpha = 0;
+    
+    getPosition(index, mTmpPoint);
+
+    transX = mTmpPoint[0];
+    transY = mTmpPoint[1];
+    if (params == null) {
+        params = new PreviewItemDrawingParams(transX, transY, totalScale, overlayAlpha);
+    } else {
+        params.update(transX, transY, totalScale);
+        params.overlayAlpha = overlayAlpha;
+    }
+    return params;
+}
+
+private void getPosition(int index, float[] result) {
+
+    int x = index % 3;
+    int y = index / 3;
+    float totalLength = mAvailableSpace;
+    float iconSize = mIconSize * scaleForItem();
+    float padding = (totalLength-(iconSize*3))/4;
+    result[0] = (iconSize+padding)*x+padding;
+    result[1] = (iconSize+padding)*y+padding;
+}
+
+public float scaleForItem() {
+    return MIN_SCALE * mBaselineIconScale;
+}
+
+
+其实到这里就已经就是九宫格了
+4、文件夹的图标比正常app图标要小一点，改成和app图标一样大。
+DeviceProfile.java:
+
+private void updateIconSize(float scale, Resources res, DisplayMetrics dm) {
+    ......
+    // Folder icon
+    folderIconSizePx = iconSizePx;
+    ......
+}
+
+
+5、设置文件夹图标和标题间距为0。
+FolderIcon.java：
+
+public static FolderIcon fromXml(int resId, Launcher launcher, ViewGroup group,
+        FolderInfo folderInfo) {
+    ......
+    lp.topMargin = grid.iconSizePx;
+}
+
+因为之前有设置过app的图标和标题的间距为0，代码如下：
+BubbleTextView.java:
+
+public BubbleTextView(Context context, AttributeSet attrs, int defStyle) {
+    ......    
+if (display == DISPLAY_WORKSPACE) {
+        ......
+        setCompoundDrawablePadding(0);
+        ......
+    } else if (display == DISPLAY_ALL_APPS) {
+        ......
+        setCompoundDrawablePadding(0);
+        ......
+    } else if (display == DISPLAY_FOLDER) {
+        ......
+        //这里其实是文件夹PagedView里的app图标，不是文件夹图标
+        setCompoundDrawablePadding(0);
+        ......
+    } 
+}
